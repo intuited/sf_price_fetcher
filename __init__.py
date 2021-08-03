@@ -32,17 +32,13 @@ class Fetcher:
         if now - self.last_request < self.min_interval:
             time.sleep((now - self.last_request) / 1000000.0)
 
-        return requests.get(self.api_url, {'exact': card_name})
+        r = requests.get(self.api_url, {'exact': card_name})
+        j = json.loads(r.text)
+        return j['prices']['usd']
 
 fetcher = Fetcher() # singleton object to restrict retrieval frequency
 
 if __name__ == '__main__':
     card_name = sys.argv[1]
-    r = fetcher.get(card_name)
-    # print(r)
-    # print(dir(r))
-    # print(r.text)
-    j = json.loads(r.text)
-    # print(f'json keys: {sorted(j.keys())}')
-    # pp(j)
-    print(f'{j["name"]}: ${j["prices"]["usd"]}')
+    price = fetcher.get(card_name)
+    print(f'{card_name}: ${price}')
