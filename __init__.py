@@ -7,7 +7,6 @@ Fetches MTG card prices from Scryfall
 """
 import requests
 import time
-import sys
 import json
 import pprint
 from functools import partial
@@ -37,8 +36,3 @@ class Fetcher:
         return j['prices']['usd']
 
 fetcher = Fetcher() # singleton object to restrict retrieval frequency
-
-if __name__ == '__main__':
-    card_name = sys.argv[1]
-    price = fetcher.get(card_name)
-    print(f'{card_name}: ${price}')
