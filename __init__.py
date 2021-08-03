@@ -31,6 +31,7 @@ class Fetcher:
         if now - self.last_request < self.min_interval:
             time.sleep((now - self.last_request) / 1000000.0)
 
+        self.last_request = now
         r = requests.get(self.api_url, {'exact': card_name})
         j = json.loads(r.text)
         return j['prices']['usd']
