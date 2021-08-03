@@ -26,9 +26,17 @@ class Fetcher:
     def get_card(self, card_name, timeout=2.0):
         """Fetch info for card `card_name`
 
-        Blocks until self.last_request + 100ms.
+        Returns full parsed JSON for the card name.
+        """
+        r = self.request(self.api_url, {'exact': card_name}, timeout=timeout)
+        return json.loads(r.text)
 
-        Then updates self.last_request and requests pricing data from Scryfall.
+    def request(self, url, params, timeout=2.0):
+        """Make a request from the scryfall REST API.
+
+        Blocks until the time of self.last_request + 100ms.
+
+        Then updates self.last_request and sends request.
 
         Times out if no response is received within `timeout` seconds.
 
@@ -39,7 +47,6 @@ class Fetcher:
             time.sleep((now - self.last_request) / 1000000.0)
 
         self.last_request = now
-        r = requests.get(self.api_url, {'exact': card_name})
-        return json.loads(r.text)
+        return requests.get(url, params, timeout=timeout)
 
 fetcher = Fetcher() # singleton object to restrict retrieval frequency
