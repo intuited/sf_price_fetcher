@@ -14,6 +14,7 @@ from pathlib import Path
 from os import path
 
 cache_expire = datetime.timedelta(hours=24) #scryfall updates card prices every 24 hours
+cache_expire = datetime.timedelta(days=7)   #meh
 
 debug = lambda *args, **kwargs: None
 #debug = print
