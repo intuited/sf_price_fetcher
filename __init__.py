@@ -10,15 +10,14 @@ import time
 import json
 import pprint
 from functools import partial
+from sf_price_fetcher import lookups
 pp = partial(pprint.pprint, sort_dicts=False)
 
 class SFException(Exception):
     pass
 
-debug = print
 debug = lambda *args, **kwargs: None
-
-#debug = lambda *args, **kwargs: print(*args, **kwargs)
+#debug = print
 
 class Fetcher:
     last_request = 0      # timestamp of last retrieval
@@ -26,16 +25,24 @@ class Fetcher:
 
     api_url = 'https://api.scryfall.com/cards/named'
 
-    def get(self, card_name, timeout=2.0):
+    def get(self, card_name, timeout=5.0):
         """Fetch pricing data for card `card_name`.
 
         Retrieves data for all printings with that exact name (case insensitive).
 
         """
-        j = self.find_card_name(card_name, timeout=timeout)
-        return j['prices']['usd']
+        # check the lookups db for a sufficiently recent record
+        price = lookups.cache_check(card_name)
+        if price is not False:
+            debug(f'Cache hit for "{card_name}": ${price}')
+            return price
 
-    def get_card(self, card_name, timeout=2.0):
+        card = self.find_card_name(card_name, timeout=timeout)
+        price = card['prices']['usd']
+        lookups.add(card_name, price)
+        return price
+
+    def get_card(self, card_name, timeout=5.0):
         """Fetch info for card `card_name` using the API name url.
 
         Returns full parsed JSON for the card name.
@@ -43,7 +50,7 @@ class Fetcher:
         r = self.request(self.api_url, {'exact': card_name}, timeout=timeout)
         return json.loads(r.text)
 
-    def search_card_name(self, card_name, timeout=2.0):
+    def search_card_name(self, card_name, timeout=5.0):
         """Search via the scryfall API for all printings of an exact card name.
 
         Returns English results only.
@@ -61,7 +68,7 @@ class Fetcher:
 
         return j['data']
 
-    def find_card_name(self, card_name, timeout=2.0):
+    def find_card_name(self, card_name, timeout=5.0):
         """Calls `search_card_name` and trims results to cheapest valid printing.
 
         Filters out any results for which 'set_type' is 'promo' or for which there is no usd price.
@@ -76,7 +83,7 @@ class Fetcher:
             raise SFException(f'No valid results for card name "{card_name}"')
         return printings[-1]
 
-    def request(self, url, params, timeout=2.0):
+    def request(self, url, params, timeout=5.0):
         """Make a request from the scryfall REST API.
 
         Blocks until the time of self.last_request + 100ms.
