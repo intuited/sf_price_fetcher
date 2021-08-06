@@ -10,8 +10,7 @@ for a given card name happened more recently than 24 hours ago.
 """
 import sqlite3, time
 import datetime
-from pathlib import Path
-from os import path
+import pypaxtor
 
 cache_expire = datetime.timedelta(hours=24) #scryfall updates card prices every 24 hours
 cache_expire = datetime.timedelta(days=7)   #meh
@@ -19,11 +18,9 @@ cache_expire = datetime.timedelta(days=7)   #meh
 debug = lambda *args, **kwargs: None
 #debug = print
 
-home = Path.home()
-db_location = Path(home, '.local', 'share', 'python', 'sf_price_fetcher')
-debug(f'sf_price_fetcher db location: "{db_location}')
-db_location.mkdir(parents=True, exist_ok=True)
-db_file = Path(db_location, 'lookups.db')
+db_location = pypaxtor.get_storage_location('sf_price_fetcher')
+db_file = db_location / 'lookups.db'
+
 con = sqlite3.connect(db_file, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
 cur = con.cursor()
 try:
